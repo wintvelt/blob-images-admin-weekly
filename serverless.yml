@@ -14,19 +14,41 @@ provider:
   name: aws
   runtime: nodejs12.x
   stage: dev
-  region: us-east-1
-  # To load environment variables externally
-  # rename env.example to .env and uncomment
-  # the following line. Also, make sure to not
-  # commit your .env.
-  #
-  #environment:
-  #  SAMPLE_ENV_VAR: ${env:SAMPLE_ENV_VAR}
+  region: eu-central-1
+  environment:     
+    photoTable: ${file(./serverlessDomainConfig.js):photoTable.${self:provider.stage}}
+    coverIndex: cover-idx
+    photoIndex: SK-PK-idx
+    emailIndex: email-idx
+    cognitoIndex: cog-idx
+    dateIndex: date-idx
+    frontend: ${file(./serverlessDomainConfig.js):frontend.${self:provider.stage}}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeStream
+        - dynamodb:ListStreams
+      Resource: "arn:aws:dynamodb:eu-central-1:*:*"
+    - Effect: Allow
+      Action:
+        - ses:SendEmail
+        - ses:SendRawEmail
+        - ses:SendTemplatedEmail
+        - ses:SendBulkTemplatedEmail
+      Resource: "arn:aws:ses:eu-central-1:*:*"
 
 functions:
-  hello:
-    handler: handler.hello
+  weeklyMail:
+    handler: handler.main
     events:
       - http:
-          path: hello
+          path: /
           method: get
