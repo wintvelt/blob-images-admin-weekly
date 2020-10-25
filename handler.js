@@ -52,5 +52,5 @@ export const main = handler(async (event, context) => {
     });
 
     // send Email
-    return { message: `weekly mail sent (almost)`, debug: enrichedStats, debug2: topTenStats };
+    return { message: `weekly mail sent (almost)`, statsTableText };
 });
