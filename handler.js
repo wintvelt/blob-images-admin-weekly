@@ -24,7 +24,7 @@ export const main = handler(async (event, context) => {
             }
         }))
     );
-    const enrichedStats = photoStats.map((stat, i) => ({
+    const enrichedStats = topTenStats.map((stat, i) => ({
         ...stat,
         userName: usersData[i].Item?.name
     }));
@@ -36,8 +36,8 @@ export const main = handler(async (event, context) => {
         arr: enrichedStats,
         columns: [
             { label: 'Naam', key: 'userName' },
-            { label: 'Nieuwe pics', key: 'diff' },
-            { label: 'Total pics', key: 'photoCount' },
+            { label: 'Nieuwe pics', key: 'diff', right: true },
+            { label: 'Total pics', key: 'photoCount', right: true },
         ]
     });
 
@@ -52,5 +52,5 @@ export const main = handler(async (event, context) => {
     });
 
     // send Email
-    return { message: `weekly mail sent (almost)` };
+    return { message: `weekly mail sent (almost)`, debug: enrichedStats, debug2: topTenStats };
 });

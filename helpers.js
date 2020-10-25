@@ -6,8 +6,8 @@ const addDiff = (stats) => (
 );
 
 const sortByDiff = (a, b) => (
-    (a.diff > b.diff) ? 1
-        : (a.diff < b.diff) ? -1
+    (a.diff > b.diff) ? -1
+        : (a.diff < b.diff) ? 1
             : 0
 );
 
