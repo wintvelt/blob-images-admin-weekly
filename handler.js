@@ -1,5 +1,5 @@
 import { handler } from 'blob-common/core/handler';
-import { dynamoDb } from 'blob-common/core/db';
+import { dbUpdate, dynamoDb } from 'blob-common/core/db';
 import { ses } from 'blob-common/core/ses';
 import { getTopTen } from './helpers';
 import { makeTable } from './htmlTable';
@@ -30,6 +30,9 @@ export const main = handler(async (event, context) => {
     }));
 
     // update prevStats for all users
+    await Promise.all(photoStats.map(stat => {
+        return dbUpdate(stat.PK, stat.SK, 'prevPhotoCount', stat.photoCount);
+    }));
 
     // create statsTable for all users
     const statsTableText = makeTable({

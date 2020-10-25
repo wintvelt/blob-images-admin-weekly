@@ -49,6 +49,7 @@ functions:
   weeklyMail:
     handler: handler.main
     events:
-      - http:
-          path: /
-          method: get
+      # - http:
+      #     path: /
+      #     method: get
+      - schedule: cron(0 10 * * ? *)
