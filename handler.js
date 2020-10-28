@@ -24,6 +24,7 @@ export const main = handler(async (event, context) => {
             }
         }))
     );
+    // create table with username, photoCount, diff (sorted by diff descending)
     const enrichedStats = topTenStats.map((stat, i) => ({
         ...stat,
         userName: usersData[i].Item?.name
@@ -33,6 +34,12 @@ export const main = handler(async (event, context) => {
     await Promise.all(photoStats.map(stat => {
         return dbUpdate(stat.PK, stat.SK, 'prevPhotoCount', stat.photoCount);
     }));
+
+    // if there is are no stats, do not send a mail
+    if (enrichedStats.length === 0) {
+        console.log('no stats to send');
+        return { message: 'no stats' };
+    }
 
     // create statsTable for all users
     const statsTableText = makeTable({
@@ -46,6 +53,7 @@ export const main = handler(async (event, context) => {
 
     const toName = 'Vaatje';
 
+    // send Email
     await ses.sendEmail({
         toEmail: process.env.webmaster,
         fromEmail: 'clubalmanac <wouter@clubalmanac.com>',
@@ -54,6 +62,6 @@ export const main = handler(async (event, context) => {
         textData: statsMailText({ toName }),
     });
 
-    // send Email
-    return { message: `weekly mail sent (almost)`, statsTableText };
+    console.log({ message: `weekly mail sent with`, statsTableText });
+    return { message: `weekly mail sent` };
 });
