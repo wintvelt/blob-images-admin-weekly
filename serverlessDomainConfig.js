@@ -5,10 +5,10 @@ module.exports.domain = () => ({
 
 module.exports.photoTable = () => ({
     'dev': 'blob-images-photos-dev',
-    'prod': 'blob-images-photos'
+    'prod': 'blob-images-photos-prod'
 });
 
 module.exports.frontend = () => ({
-    'dev': 'http://localhost:3000',
-    'prod': 'clubalmanac.com'
+    'dev': 'https://localhost:3000',
+    'prod': 'https://clubalmanac.com'
 });
