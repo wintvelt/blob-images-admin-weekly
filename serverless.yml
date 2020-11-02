@@ -13,7 +13,7 @@ plugins:
 provider:
   name: aws
   runtime: nodejs12.x
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: eu-central-1
   environment:     
     photoTable: ${file(./serverlessDomainConfig.js):photoTable.${self:provider.stage}}
@@ -23,6 +23,7 @@ provider:
     cognitoIndex: cog-idx
     dateIndex: date-idx
     frontend: ${file(./serverlessDomainConfig.js):frontend.${self:provider.stage}}
+    stage: ${self:provider.stage}
 
   iamRoleStatements:
     - Effect: Allow

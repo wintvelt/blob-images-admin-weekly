@@ -52,14 +52,12 @@ export const main = handler(async (event, context) => {
     });
 
     const toName = 'Vaatje';
-    const branch = process.env.NEXT_PUBLIC_BRANCH || 'unknown';
-    console.log(`mailed from branch: ${branch}`);
-    console.log(`process.env.photoTable: ${process.env.photoTable}`);
-
+    const stage = process.env.stage || 'unknown';
+    console.log(`mailed from branch: ${stage}`);
     // send Email
     await ses.sendEmail({
         toEmail: process.env.webmaster,
-        fromEmail: `clubalmanac ${branch.toUpperCase()} <wouter@clubalmanac.com>`,
+        fromEmail: `clubalmanac ${stage.toUpperCase()} <wouter@clubalmanac.com>`,
         subject: `Stats van clubalmanac`,
         data: statsMailBody({ toName, statsTable: statsTableText }),
         textData: statsMailText({ toName }),

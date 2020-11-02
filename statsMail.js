@@ -16,7 +16,7 @@ export const statsMailBody = ({ toName, statsTable }) => {
         headerRow(makeEmailSrc('public/img/logo_email_1.png'), baseUrl),
         row([
             textCell(greeting(`Hi ${toName},`)),
-            textCell(paragraph(`Er zijn weer stats beschikbaar. De meest actieve leden hieronder`)),
+            textCell(paragraph(`Er zijn weer stats beschikbaar van ${process.env.stage.toUpperCase()}. De meest actieve leden hieronder`)),
             textCell(statsTable),
             dividerCell(dividerSrc),
         ]),
