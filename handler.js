@@ -54,6 +54,7 @@ export const main = handler(async (event, context) => {
     const toName = 'Vaatje';
     const branch = process.env.NEXT_PUBLIC_BRANCH || 'unknown';
     console.log(`mailed from branch: ${branch}`);
+    console.log(`process.env.photoTable: ${process.env.photoTable}`);
 
     // send Email
     await ses.sendEmail({
