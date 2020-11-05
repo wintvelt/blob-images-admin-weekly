@@ -73,6 +73,7 @@ export const main = handler(async (event, context) => {
             columns: [
                 { label: 'Naam', key: 'name' },
                 { label: 'Gemaakt op', key: 'createdAt' },
+                { label: 'DB Key', key: 'SK' },
             ]
         }) : '';
 
