@@ -1,9 +1,12 @@
 import { handler } from 'blob-common/core/handler';
 import { dbUpdate, dynamoDb } from 'blob-common/core/db';
+import { diffDate, now } from 'blob-common/core/date';
 import { ses } from 'blob-common/core/ses';
 import { getTopTen } from './helpers';
 import { makeTable } from './htmlTable';
 import { statsMailBody, statsMailText } from './statsMail';
+
+const MAILFREQ = 1; // days
 
 export const main = handler(async (event, context) => {
     // get photoStats from all users
@@ -41,7 +44,7 @@ export const main = handler(async (event, context) => {
         return { message: 'no stats' };
     }
 
-    // create statsTable for all users
+    // create statsTable for top-10 user photos
     const statsTableText = makeTable({
         arr: enrichedStats,
         columns: [
@@ -51,6 +54,29 @@ export const main = handler(async (event, context) => {
         ]
     });
 
+    // get newly created groups
+    const groupsData = await dynamoDb.query({
+        KeyConditionExpression: '#PK = :PK',
+        ExpressionAttributeNames: { '#PK': 'PK' },
+        ExpressionAttributeValues: { ':PK': 'GBbase' }
+    });
+    const groups = groupsData.Items || [];
+    const today = now();
+    const cutoffDate = diffDate(today, -MAILFREQ);
+    const newGroups = groups.filter(group => group.createdAt >= cutoffDate);
+    const hasNewGroups = (newGroups.length > 0);
+
+    // create table for new groups
+    const groupsTableText = (hasNewGroups) ?
+        makeTable({
+            arr: newGroups,
+            columns: [
+                { label: 'Naam', key: 'name' },
+                { label: 'Gemaakt op', key: 'createdAt' },
+            ]
+        }) : '';
+
+
     const toName = 'Vaatje';
     const stage = process.env.stage || 'unknown';
     console.log(`mailed from branch: ${stage}`);
@@ -59,7 +85,11 @@ export const main = handler(async (event, context) => {
         toEmail: process.env.webmaster,
         fromEmail: `clubalmanac ${stage.toUpperCase()} <wouter@clubalmanac.com>`,
         subject: `Stats van clubalmanac`,
-        data: statsMailBody({ toName, statsTable: statsTableText }),
+        data: statsMailBody({
+            toName,
+            statsTable: statsTableText,
+            groupsTable: groupsTableText
+        }),
         textData: statsMailText({ toName }),
     });
 

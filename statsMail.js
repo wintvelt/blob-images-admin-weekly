@@ -10,7 +10,7 @@ export const statsMailText = ({toName}) => {
     return `Hi ${toName}, Er zijn stats, maar je kunt ze zonder html niet bekijken`;
 };
 
-export const statsMailBody = ({ toName, statsTable }) => {
+export const statsMailBody = ({ toName, statsTable, groupsTable }) => {
 
     return emailBody([
         headerRow(makeEmailSrc('public/img/logo_email_1.png'), baseUrl),
@@ -18,6 +18,8 @@ export const statsMailBody = ({ toName, statsTable }) => {
             textCell(greeting(`Hi ${toName},`)),
             textCell(paragraph(`Er zijn weer stats beschikbaar van ${process.env.stage.toUpperCase()}. De meest actieve leden hieronder`)),
             textCell(statsTable),
+            (groupsTable)? textCell(paragraph(`En er zijn nieuwe groepen!`)) : '',
+            (groupsTable)? textCell(groupsTable) : '',
             dividerCell(dividerSrc),
         ]),
         row([
