@@ -8,11 +8,15 @@ const addDiff = (stats) => (
 const sortByDiff = (a, b) => (
     (a.diff > b.diff) ? -1
         : (a.diff < b.diff) ? 1
-            : 0
+            : (a.photoCount > b.photoCount) ? -1
+                : (a.photoCount < b.photoCount) ? 1
+                    : 0
 );
 
 export const getTopTen = (stats) => {
     let withDiff = addDiff(stats);
     const sortedWithDiff = withDiff.sort(sortByDiff);
-    return sortedWithDiff.slice(0, 10);
+    const topTen = sortedWithDiff.slice(0, 10);
+    if (topTen[0].diff === 0) return [];
+    return topTen;
 };

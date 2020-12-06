@@ -17,42 +17,41 @@ export const main = handler(async (event, context) => {
     });
     const photoStats = photoStatsData.Items || [];
     const topTenStats = getTopTen(photoStats);
+    const hasTopTenStats = (topTenStats.length > 0);
 
-    // enrich stats data
-    const usersData = await Promise.all(
-        topTenStats.map(stat => dynamoDb.get({
-            Key: {
-                PK: 'USER',
-                SK: stat.SK
-            }
-        }))
-    );
-    // create table with username, photoCount, diff (sorted by diff descending)
-    const enrichedStats = topTenStats.map((stat, i) => ({
-        ...stat,
-        userName: usersData[i].Item?.name
-    }));
+    let statsTableText = '';
+    if (hasTopTenStats) {
+        // enrich stats data
+        const usersData = await Promise.all(
+            topTenStats.map(stat => dynamoDb.get({
+                Key: {
+                    PK: 'USER',
+                    SK: stat.SK
+                }
+            }))
+        );
+        // create table with username, photoCount, diff (sorted by diff descending)
+        const enrichedStats = topTenStats.map((stat, i) => ({
+            ...stat,
+            userName: usersData[i].Item?.name
+        }));
 
-    // update prevStats for all users
-    await Promise.all(photoStats.map(stat => {
-        return dbUpdate(stat.PK, stat.SK, 'prevPhotoCount', stat.photoCount);
-    }));
+        // update prevStats for all users
+        await Promise.all(photoStats.map(stat => {
+            return dbUpdate(stat.PK, stat.SK, 'prevPhotoCount', stat.photoCount);
+        }));
 
-    // if there is are no stats, do not send a mail
-    if (enrichedStats.length === 0) {
-        console.log('no stats to send');
-        return { message: 'no stats' };
-    }
+        // create statsTable for top-10 user photos
+        statsTableText = makeTable({
+            arr: enrichedStats,
+            columns: [
+                { label: 'Naam', key: 'userName' },
+                { label: 'Nieuwe pics', key: 'diff', right: true },
+                { label: 'Total pics', key: 'photoCount', right: true },
+            ]
+        });
+    };
 
-    // create statsTable for top-10 user photos
-    const statsTableText = makeTable({
-        arr: enrichedStats,
-        columns: [
-            { label: 'Naam', key: 'userName' },
-            { label: 'Nieuwe pics', key: 'diff', right: true },
-            { label: 'Total pics', key: 'photoCount', right: true },
-        ]
-    });
 
     // get newly created groups
     const groupsData = await dynamoDb.query({
@@ -77,7 +76,10 @@ export const main = handler(async (event, context) => {
             ]
         }) : '';
 
-
+    if (!hasTopTenStats && !hasNewGroups) {
+        console.log('no new photos or new groups');
+        return { message: 'no mail, no stats' };
+    }
     const toName = 'Vaatje';
     const stage = process.env.stage || 'unknown';
     console.log(`mailed from branch: ${stage}`);
