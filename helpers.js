@@ -17,6 +17,7 @@ export const getTopTen = (stats) => {
     let withDiff = addDiff(stats);
     const sortedWithDiff = withDiff.sort(sortByDiff);
     const topTen = sortedWithDiff.slice(0, 10);
+    console.log(topTen);
     if (topTen[0].diff === 0) return [];
     return topTen;
 };
