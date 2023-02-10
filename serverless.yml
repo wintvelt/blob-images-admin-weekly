@@ -50,10 +50,17 @@ provider:
           Resource: "arn:aws:ses:eu-central-1:*:*"
 
 functions:
-  weeklyMail:
+  dailyMail:
     handler: handler.main
     events:
       # - http:
       #     path: /
       #     method: get
-      - schedule: cron(0 10 * * ? *)
+      - schedule: cron(0 10 * * ? *) # daily at 10am
+  flaggedMail:
+    handler: handlerFlagged.main
+    events:
+      # - http:
+      #     path: /
+      #     method: get
+      - schedule: cron(0 8 * * ? *) # daily at 8am

@@ -11,7 +11,7 @@
     - you appealed on z flagged photos
 
     mail to admin contains:
-    - x new flagged photos
+    - x new flagged photos, x deleted photos
 
     Nice to have/ TODO
     - deeplink to flagged photos in my account
@@ -20,12 +20,13 @@ import { handler } from 'blob-common/core/handler';
 import { dynamoDb, dbUpdateMulti } from 'blob-common/core/db';
 import { diffDate, now } from 'blob-common/core/date';
 import { ses } from 'blob-common/core/ses';
-import { statsMailBody, statsMailText } from './statsMail';
 import { flaggedAdminMailBody, flaggedAdminMailText, flaggedUserMailBody, flaggedUserMailText } from './flaggedMail';
+import { makeTable } from './htmlTable';
 
 const MAILFREQ = 1; // days
 
 export const main = handler(async (event, context) => {
+    const stage = process.env.stage || 'unknown';
     const today = now();
     const yesterday = diffDate(today, -MAILFREQ); // works only if 1 day
     // get all flagged photos
@@ -40,7 +41,7 @@ export const main = handler(async (event, context) => {
         },
     });
     const flaggedPhotos = result.Items || [];
-    if (flaggedPhotos.length === 0) return { message: `there were no new flagged photos on ${yesterday}` }
+    if (flaggedPhotos.length === 0) return { message: `there were no new flagged photos on ${yesterday}` };
 
     // ROUND 1 promises
     let round1Promises = [];
@@ -141,23 +142,26 @@ export const main = handler(async (event, context) => {
         }));
     };
 
-    // add email to webmaster with stats to promises list
-    const adminTableText = makeTable({
-        arr: Object.values(userDict),
-        columns: [
-            { label: 'Naam', key: 'name' },
-            { label: 'Verwijderd', key: 'deleteCount' },
-            { label: 'Gemeld', key: 'flaggedCount' },
-            { label: 'Bezwaar', key: 'appealedCount' }
-        ]
-    });
-    round2Promises.push(ses.sendEmail({
-        toEmail: process.env.webmaster,
-        fromEmail: `clubalmanac ${stage.toUpperCase()} <wouter@clubalmanac.com>`,
-        subject: `clubalmanac ${stage.toUpperCase()} update over ongepaste inhoud`,
-        data: flaggedAdminMailBody({ name: 'Vaatje', adminTableText }),
-        textData: flaggedAdminMailText(),
-    }))
+    // only if there are any new flagged photos or any deletions scheduled
+    if (!!Object.values(userDict).find(user => (user.newFlagged.length > 0) || (user.deleteCount > 0))) {
+        // add email to webmaster with stats to promises list
+        const adminTableText = makeTable({
+            arr: Object.values(userDict),
+            columns: [
+                { label: 'Naam', key: 'name' },
+                { label: 'Verwijderd', key: 'deleteCount' },
+                { label: 'Gemeld', key: 'flaggedCount' },
+                { label: 'Bezwaar', key: 'appealedCount' }
+            ]
+        });
+        round2Promises.push(ses.sendEmail({
+            toEmail: process.env.webmaster,
+            fromEmail: `clubalmanac ${stage.toUpperCase()} <wouter@clubalmanac.com>`,
+            subject: `clubalmanac ${stage.toUpperCase()} update over ongepaste inhoud`,
+            data: flaggedAdminMailBody({ name: 'Vaatje', adminTableText }),
+            textData: flaggedAdminMailText(),
+        }));
+    }
 
     // run promises ROUND 2
     await Promise.all(round2Promises);
