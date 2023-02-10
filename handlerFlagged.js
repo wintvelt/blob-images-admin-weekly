@@ -53,7 +53,7 @@ export const main = handler(async (event, context) => {
         const { flaggedDate, flaggedAppealDate, flaggedDeleteDate } = photo;
         const userId = photo.SK;
         const userRecord = userDict[userId] || {};
-        const { flaggedCount, appealedCount, deleteCount, shouldReceiveMail, newFlagged = [] } = userRecord;
+        const { flaggedCount, appealedCount, deleteCount, shouldReceiveMail, hasNewAppeals, newFlagged = [] } = userRecord;
         const isNewFlagged = (flaggedDate === yesterday);
         const newNewFlagged = (isNewFlagged) ? [...newFlagged, photo] : newFlagged;
         const isDeletable = (flaggedDeleteDate === today);
@@ -78,12 +78,14 @@ export const main = handler(async (event, context) => {
         const newDeleteCount = (deleteCount || 0) + (isDeletable ? 1 : 0);
         const newAppealedCount = (appealedCount || 0) + ((flaggedAppealDate && !isDeletable) ? 1 : 0);
         const newShouldReceiveEmail = (shouldReceiveMail) || (isNewFlagged && !flaggedAppealDate);
+        const newHasNewAppeals = (hasNewAppeals) || (flaggedAppealDate === yesterday);
         const newUserRecord = {
             userId, // store userId in value too
             deleteCount: newDeleteCount,
             flaggedCount: newFlaggedCount,
             appealedCount: newAppealedCount,
             shouldReceiveMail: newShouldReceiveEmail,
+            hasNewAppeals: newHasNewAppeals,
             newFlagged: newNewFlagged
         };
         userDict[userId] = newUserRecord;
@@ -142,8 +144,9 @@ export const main = handler(async (event, context) => {
         }));
     };
 
-    // only if there are any new flagged photos or any deletions scheduled
-    if (!!Object.values(userDict).find(user => (user.newFlagged.length > 0) || (user.deleteCount > 0))) {
+    // only if there are any new flagged photos OR any deletions scheduled OR any new appeals
+    if (!!Object.values(userDict).find(user =>
+        (user.newFlagged.length > 0) || (user.deleteCount > 0) || user.hasNewAppeals)) {
         // add email to webmaster with stats to promises list
         const adminTableText = makeTable({
             arr: Object.values(userDict),
